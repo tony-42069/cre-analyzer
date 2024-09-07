@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Does my deal pencil? ✏️</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ddd8cb;
+            color: #333;
+        }
+        h1 {
+            color: #031b30;
+            text-align: center;
+        }
+        .calculator {
+            background-color: #3079b1;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border: 2px solid #031b30;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            color: #fff;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #bdc3c7;
+            border-radius: 4px;
+            font-size: 16px;
+            background-color: #fff;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin-top: 20px;
+            background-color: #031b30;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 18px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #a7713b;
+        }
+        #result, #commentary {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #fff;
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 4px;
+        }
+        .deal-indicator {
+            font-size: 72px;
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>"Does my deal pencil? ✏️"™</h1>
+    <div class="calculator">
+        <form id="creForm">
+            <label for="purchasePrice">Purchase Price:</label>
+            <input type="text" id="purchasePrice" required>
+            
+            <label for="annualNOI">Annual Net Operating Income (NOI):</label>
+            <input type="text" id="annualNOI" required>
+            
+            <label for="annualGrowthRate">Annual NOI Growth Rate (%):</label>
+            <input type="number" id="annualGrowthRate" value="2" step="0.01" required>
+            
+            <label for="holdingPeriod">Holding Period (years):</label>
+            <input type="number" id="holdingPeriod" value="5" required>
+            
+            <label for="exitCapRate">Exit Cap Rate (%):</label>
+            <input type="number" id="exitCapRate" value="6" step="0.01" required>
+            
+            <label for="loanToValue">Loan-to-Value (LTV) (%):</label>
+            <input type="number" id="loanToValue" value="75" step="0.01" required>
+            
+            <label for="interestRate">Interest Rate (%):</label>
+            <input type="number" id="interestRate" value="5.5" step="0.01" required>
+            
+            <label for="amortizationPeriod">Amortization Period (years):</label>
+            <input type="number" id="amortizationPeriod" value="30" required>
+            
+            <label for="closingCosts">Closing Costs (%):</label>
+            <input type="number" id="closingCosts" value="2" step="0.01" required>
+            
+            <label for="annualCapEx">Annual CapEx (% of NOI):</label>
+            <input type="number" id="annualCapEx" value="5" step="0.01" required>
+            
+            <button type="submit">Analyze Investment</button>
+        </form>
+        <div id="result"></div>
+        <div id="commentary"></div>
+        <div id="dealIndicator" class="deal-indicator"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('creForm');
+        const resultDiv = document.getElementById('result');
+
+        document.getElementById('purchasePrice').addEventListener('input', function(e) {
+            this.value = formatNumber(this.value.replace(/,/g, ''));
+        });
+        document.getElementById('annualNOI').addEventListener('input', function(e) {
+            this.value = formatNumber(this.value.replace(/,/g, ''));
+        });
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const purchasePrice = parseFloat(document.getElementById('purchasePrice').value.replace(/,/g, ''));
+            const annualNOI = parseFloat(document.getElementById('annualNOI').value.replace(/,/g, ''));
+            const annualGrowthRate = parseFloat(document.getElementById('annualGrowthRate').value) / 100;
+            const holdingPeriod = parseInt(document.getElementById('holdingPeriod').value);
+            const exitCapRate = parseFloat(document.getElementById('exitCapRate').value) / 100;
+            const loanToValue = parseFloat(document.getElementById('loanToValue').value) / 100;
+            const interestRate = parseFloat(document.getElementById('interestRate').value) / 100;
+            const amortizationPeriod = parseInt(document.getElementById('amortizationPeriod').value);
+            const closingCosts = parseFloat(document.getElementById('closingCosts').value) / 100;
+            const annualCapEx = parseFloat(document.getElementById('annualCapEx').value) / 100;
+
+            const loanAmount = purchasePrice * loanToValue;
+            const equityInvestment = purchasePrice * (1 - loanToValue) + (purchasePrice * closingCosts);
+            const capRate = annualNOI / purchasePrice;
+
+            const monthlyRate = interestRate / 12;
+            const totalPayments = amortizationPeriod * 12;
+            const monthlyDebtService = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, totalPayments)) / (Math.pow(1 + monthlyRate, totalPayments) - 1);
+            const annualDebtService = monthlyDebtService * 12;
+
+            const cashFlows = [-equityInvestment];
+            let currentNOI = annualNOI;
+            for (let year = 1; year <= holdingPeriod; year++) {
+                currentNOI *= (1 + annualGrowthRate);
+                const capExReserve = currentNOI * annualCapEx;
+                const cashFlow = currentNOI - annualDebtService - capExReserve;
+                cashFlows.push(cashFlow);
+            }
+
+            const exitValue = currentNOI / exitCapRate;
+            const loanBalance = calculateLoanBalance(loanAmount, interestRate, amortizationPeriod, holdingPeriod);
+            const salesCosts = exitValue * 0.04;
+            const netSalesProceeds = exitValue - loanBalance - salesCosts;
+            cashFlows[cashFlows.length - 1] += netSalesProceeds;
+
+            const irr = calculateIRR(cashFlows);
+            const npv = calculateNPV(cashFlows, 0.10);
+            const cashOnCashReturn = (cashFlows[1] / equityInvestment) * 100;
+
+            resultDiv.innerHTML = `
+                <h3>Investment Analysis:</h3>
+                <p><strong>Equity Investment:</strong> $${formatNumber(equityInvestment)}</p>
+                <p><strong>Loan Amount:</strong> $${formatNumber(loanAmount)}</p>
+                <p><strong>Initial Cap Rate:</strong> ${formatPercent(capRate)}</p>
+                <p><strong>Exit Cap Rate:</strong> ${formatPercent(exitCapRate)}</p>
+                <p><strong>IRR:</strong> ${formatPercent(irr)}</p>
+                <p><strong>NPV (10% discount rate):</strong> $${formatNumber(npv)}</p>
+                <p><strong>Cash-on-Cash Return (Year 1):</strong> ${formatPercent(cashOnCashReturn / 100)}</p>
+                <p><strong>Exit Value:</strong> $${formatNumber(exitValue)}</p>
+                <p><strong>Net Sales Proceeds:</strong> $${formatNumber(netSalesProceeds)}</p>
+                <p><strong>Equity Multiple:</strong> ${(cashFlows.reduce((a, b) => a + b) / equityInvestment).toFixed(2)}x</p>
+            `;
+
+            const commentary = generateCommentary(irr, npv, cashOnCashReturn, capRate, exitCapRate);
+            document.getElementById('commentary').innerHTML = `<h3>Deal Commentary:</h3><p>${commentary}</p>`;
+
+            const dealIndicator = getDealIndicator(irr, npv, cashOnCashReturn);
+            document.getElementById('dealIndicator').innerHTML = dealIndicator;
+        });
+
+        function formatNumber(num) {
+            return new Intl.NumberFormat('en-US', { 
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0 
+            }).format(num);
+        }
+
+        function formatPercent(num) {
+            return (num * 100).toFixed(2) + '%';
+        }
+
+        function calculateLoanBalance(initialBalance, annualRate, amortizationYears, elapsedYears) {
+            const monthlyRate = annualRate / 12;
+            const totalPayments = amortizationYears * 12;
+            const monthlyPayment = (initialBalance * monthlyRate * Math.pow(1 + monthlyRate, totalPayments)) / (Math.pow(1 + monthlyRate, totalPayments) - 1);
+            
+            let balance = initialBalance;
+            for (let i = 0; i < elapsedYears * 12; i++) {
+                const interestPayment = balance * monthlyRate;
+                const principalPayment = monthlyPayment - interestPayment;
+                balance -= principalPayment;
+            }
+            return balance;
+        }
+
+        function calculateIRR(cashFlows) {
+            const epsilon = 0.00001;
+            let guess = 0.1;
+            let maxIterations = 1000;
+            let iteration = 0;
+
+            while (iteration < maxIterations) {
+                const npv = calculateNPV(cashFlows, guess);
+                if (Math.abs(npv) < epsilon) {
+                    return guess;
+                }
+
+                const derivativeNPV = calculateDerivativeNPV(cashFlows, guess);
+                if (derivativeNPV === 0) {
+                    break;
+                }
+
+                const newGuess = guess - npv / derivativeNPV;
+                if (Math.abs(newGuess - guess) < epsilon) {
+                    return newGuess;
+                }
+
+                guess = newGuess;
+                iteration++;
+            }
+
+            return null;
+        }
+
+        function calculateNPV(cashFlows, rate) {
+            return cashFlows.reduce((npv, cashFlow, index) => npv + cashFlow / Math.pow(1 + rate, index), 0);
+        }
+
+        function calculateDerivativeNPV(cashFlows, rate) {
+            return cashFlows.reduce((sum, cashFlow, index) => {
+                return sum - index * cashFlow / Math.pow(1 + rate, index + 1);
+            }, 0);
+        }
+
+        function generateCommentary(irr, npv, cashOnCashReturn, capRate, exitCapRate) {
+            let commentary = "";
+
+            if (irr > 0.15) {
+                commentary += `The IRR of ${formatPercent(irr)} is excellent, indicating a strong potential return on investment. `;
+            } else if (irr > 0.10) {
+                commentary += `The IRR of ${formatPercent(irr)} is good, suggesting a solid investment opportunity. `;
+            } else {
+                commentary += `The IRR of ${formatPercent(irr)} is below average, which may warrant caution. `;
+            }
+
+            if (npv > 0) {
+                commentary += "The positive NPV suggests that the investment could add value to your portfolio. ";
+            } else {
+                commentary += "The negative NPV indicates that the investment might not meet your required rate of return. ";
+            }
+
+            if (cashOnCashReturn > 8) {
+                commentary += `The first-year cash-on-cash return of ${formatPercent(cashOnCashReturn / 100)} is strong, providing good immediate cash flow. `;
+            } else if (cashOnCashReturn > 5) {
+                commentary += `The first-year cash-on-cash return of ${formatPercent(cashOnCashReturn / 100)} is decent, but there might be room for improvement. `;
+            } else {
+                commentary += `The first-year cash-on-cash return of ${formatPercent(cashOnCashReturn / 100)} is low, which could be a concern for short-term cash flow. `;
+            }
+
+            if (exitCapRate < capRate) {
+                commentary += "The exit cap rate is lower than the entry cap rate, which could indicate market appreciation or value-add potential. ";
+            } else if (exitCapRate > capRate) {
+                commentary += "The exit cap rate is higher than the entry cap rate, which might suggest a more conservative exit assumption or potential market risks. ";
+            }
+
+            return commentary;
+        }
+
+        function getDealIndicator(irr, npv, cashOnCashReturn) {
+            if (irr > 0.15 && npv > 0 && cashOnCashReturn > 7) {
+                return "✅";
+            } else if (irr > 0.10 && npv > 0 && cashOnCashReturn > 5) {
+                return "⚠️";
+            } else {
+                return "❌";
+            }
+        }
+    </script>
+</body>
+</html>
