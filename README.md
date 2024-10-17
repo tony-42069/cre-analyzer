@@ -1,4 +1,4 @@
-# "Does my deal pencil? ✏️"™
+# ["Does my deal pencil? ✏️"™ ]([https://www.napkin.ai](https://jovial-halva-f7a568.netlify.app/) 
 
 **Does My Deal Pencil?** is a web-based tool designed to help real estate investors analyze the profitability of commercial real estate deals. With this calculator, you can quickly evaluate important financial metrics such as Internal Rate of Return (IRR), Net Present Value (NPV), Cash-on-Cash return, and Cap Rate, helping you determine whether a deal pencils out.
 
